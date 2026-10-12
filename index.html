@@ -1,0 +1,182 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zamówienia za pobraniem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f5;--card:#fff;--ink:#16201b;--muted:#68736d;--line:#e3e7e4;
+  --accent:#1f7a4d;--accent-soft:#e6f3ec;--warn:#b5541c;--warn-soft:#fbeee5;--danger:#b42318;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121614;--card:#1a1f1c;--ink:#e9eeeb;--muted:#9aa59f;--line:#2a312d;
+  --accent:#4cc38a;--accent-soft:#1c3328;--warn:#f0995e;--warn-soft:#3a2619;--danger:#f97066;}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1a1f1c;--ink:#e9eeeb;--muted:#9aa59f;--line:#2a312d;
+  --accent:#4cc38a;--accent-soft:#1c3328;--warn:#f0995e;--warn-soft:#3a2619;--danger:#f97066;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Manrope,system-ui,sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);margin:4px 0 24px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font-size:26px;font-weight:800}
+.stat span{color:var(--muted);font-size:13px}
+.stat.w b{color:var(--warn)} .stat.g b{color:var(--accent)}
+form.add{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;
+  grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+form.add .wide{grid-column:span 2}
+.info{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin-top:10px;font-size:14px}
+.info dt{color:var(--muted)} .info dd{margin:0;font-weight:500} .info a{color:var(--ink)}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;background:var(--accent);color:#fff;transition:transform .12s,opacity .12s}
+button:active{transform:scale(.97)}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{background:transparent;color:var(--muted);border:1px solid var(--line);padding:6px 14px;font-weight:600}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.order{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.order.paid{background:var(--accent-soft);border-color:transparent}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.name{font-weight:700;font-size:17px}
+.meta{color:var(--muted);font-size:13px}
+.badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
+.paid .badge{background:var(--accent-soft);color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+label.chk{display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 8px;border-radius:8px}
+label.chk:hover{background:var(--bg)}
+label.chk input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+label.chk .d{margin-left:auto;color:var(--muted);font-size:13px}
+label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;padding-top:10px;margin-top:4px}
+.del{background:none;color:var(--muted);padding:4px 8px;font-weight:500;font-size:13px}
+.del:hover{color:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+.note{color:var(--muted);font-size:13px;margin-top:8px}
+@media (max-width:700px){form.add{grid-template-columns:1fr 1fr}form.add .wide{grid-column:1/-1}form.add button{grid-column:1/-1}.stats{gap:8px}.stat b{font-size:22px}}
+.gate{min-height:100vh;display:grid;place-items:center;padding:16px}
+.gate form{width:100%;max-width:360px;display:grid;gap:10px}
+.gate h1{font-size:24px}.gate .sub{margin:0 0 6px}.err{color:var(--danger);margin:0;min-height:1.5em}
+[hidden]{display:none!important}
+</style>
+</head><body>
+<div class="gate" id="gate"><form id="gateForm">
+  <h1>Zamówienia za pobraniem</h1><p class="sub">Wpisz hasło zespołu.</p>
+  <input id="pw" type="password" placeholder="Hasło" autocomplete="current-password" autofocus required>
+  <button type="submit">Wejdź</button><p class="err" id="gateErr"></p></form></div>
+<div class="wrap" id="app" hidden>
+  <h1>Zamówienia za pobraniem</h1>
+  <p class="sub">Kontrola płatności – kto zapłacił, z kim trzeba się skontaktować.</p>
+
+  <div class="stats">
+    <div class="stat w"><b id="sOpen">0</b><span>Nieopłacone</span></div>
+    <div class="stat g"><b id="sPaid">0</b><span>Opłacone</span></div>
+    <div class="stat"><b id="sAll">0</b><span>Wszystkie</span></div>
+  </div>
+
+  <form class="add" id="add">
+    <input id="fFirst" placeholder="Imię" required>
+    <input id="fLast" placeholder="Nazwisko" required>
+    <input id="fPhone" placeholder="Telefon" type="tel">
+    <input id="fMail" placeholder="E-mail" type="email">
+    <input id="fProd" placeholder="Co zamówił (produkt, ilość)" class="wide" required>
+    <input id="fNo" placeholder="Nr zamówienia">
+    <input id="fAmt" placeholder="Kwota zł" inputmode="decimal">
+    <button type="submit">Dodaj zamówienie</button>
+  </form>
+
+  <div class="tabs" id="tabs">
+    <button data-f="open" class="on">Nieopłacone</button>
+    <button data-f="paid">Opłacone</button>
+    <button data-f="all">Wszystkie</button>
+  </div>
+  <div id="list"><p class="empty">Ładowanie…</p></div>
+  <p class="note" id="note"></p>
+</div>
+
+<script src="config.js"></script>
+<script>
+const STEPS=[["mail","Napisany e-mail"],["sms","Napisany SMS"],["phone","Telefon"]];
+let orders=[],filter="open";
+try{filter=localStorage.getItem("f")||"open"}catch(e){}
+const $=id=>document.getElementById(id);
+const fmt=iso=>iso?new Date(iso).toLocaleString("pl-PL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const paid=orders.filter(o=>o.paid);
+  $("sOpen").textContent=orders.length-paid.length;$("sPaid").textContent=paid.length;$("sAll").textContent=orders.length;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
+  const rows=orders.filter(o=>filter==="all"||(filter==="paid"?o.paid:!o.paid));
+  if(!rows.length){$("list").innerHTML='<p class="empty">Brak zamówień w tym widoku.</p>';return}
+  $("list").innerHTML=rows.map(o=>`
+    <div class="order ${o.paid?"paid":""}">
+      <div class="head">
+        <div><div class="name">${esc(o.first||o.name)} ${esc(o.last)}</div>
+          <div class="meta">${[o.no&&"Nr "+esc(o.no),o.amount&&esc(o.amount)+" zł","dodano "+fmt(o.created)].filter(Boolean).join(" · ")}</div>
+          <dl class="info">
+            <dt>Zamówił</dt><dd>${esc(o.product)||"—"}</dd>
+            <dt>Telefon</dt><dd>${o.phone_no?`<a href="tel:${esc(o.phone_no)}">${esc(o.phone_no)}</a>`:esc(o.contact)||"—"}</dd>
+            <dt>E-mail</dt><dd>${o.email?`<a href="mailto:${esc(o.email)}">${esc(o.email)}</a>`:"—"}</dd>
+          </dl></div>
+        <div><span class="badge">${o.paid?"Opłacone":"Czeka na płatność"}</span>
+          <button class="del" data-del="${o.id}">Usuń</button></div>
+      </div>
+      <div class="checks">
+        ${STEPS.map(([k,l])=>`<label class="chk"><input type="checkbox" data-id="${o.id}" data-k="${k}" ${o[k]?"checked":""}>${l}<span class="d">${fmt(o[k])}</span></label>`).join("")}
+        <label class="chk pay"><input type="checkbox" data-id="${o.id}" data-k="paid" ${o.paid?"checked":""}>Opłacone<span class="d">${fmt(o.paid)}</span></label>
+      </div>
+    </div>`).join("");
+}
+
+$("tabs").onclick=e=>{const f=e.target.dataset.f;if(!f)return;filter=f;try{localStorage.setItem("f",f)}catch(e){}render()};
+// ---- baza Supabase: każda operacja wymaga hasła zespołu ----
+let pw=null;
+async function rpc(fn,args){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({pw,...args})});
+  if(!r.ok)throw new Error(await r.text());const t=await r.text();return t?JSON.parse(t):null;
+}
+async function load(){
+  try{orders=await rpc("get_orders",{});$("note").textContent="";render()}
+  catch(e){$("note").textContent="Brak połączenia – sprawdzam ponownie…"}
+}
+$("list").onchange=async e=>{
+  const t=e.target;if(!t.dataset.k)return;
+  try{await rpc("set_step",{oid:t.dataset.id,step:t.dataset.k,val:t.checked?new Date().toISOString():null})}
+  catch(err){alert("Nie zapisano – spróbuj ponownie.")}
+  load();
+};
+$("list").onclick=async e=>{
+  const id=e.target.dataset.del;if(!id)return;
+  if(confirm("Usunąć to zamówienie z listy?")){await rpc("del_order",{oid:id}).catch(()=>alert("Nie usunięto."));load()}
+};
+$("add").onsubmit=async e=>{
+  e.preventDefault();
+  const v=id=>$(id).value.trim(),btn=e.target.querySelector("button");
+  const o={first:v("fFirst"),last:v("fLast"),phone_no:v("fPhone"),email:v("fMail"),product:v("fProd"),no:v("fNo"),amount:v("fAmt")};
+  btn.disabled=true;
+  try{await rpc("add_order",{o});e.target.reset();$("fFirst").focus();filter="open";await load()}
+  catch(err){alert("Nie zapisano – spróbuj ponownie.")}
+  btn.disabled=false;
+};
+
+// ---- ekran hasła ----
+async function start(pass){
+  pw=pass;
+  let ok=false;try{ok=await rpc("check_pw",{})}catch(e){}
+  if(!ok){pw=null;return false}
+  try{localStorage.setItem("pw",pass)}catch(e){}
+  $("gate").hidden=true;$("app").hidden=false;load();
+  setInterval(()=>{if(!document.hidden&&!document.activeElement.matches("input"))load()},5000);
+  return true;
+}
+// pierwsze uruchomienie: właściciel ustala hasło zespołu
+let setup=false;
+rpc("has_pw",{}).then(has=>{if(has===false){setup=true;$("gate").querySelector(".sub").textContent="Pierwsze uruchomienie – ustal hasło dla zespołu (min. 6 znaków).";$("gate").querySelector("button").textContent="Ustaw hasło"}}).catch(()=>{});
+$("gateForm").onsubmit=async e=>{
+  e.preventDefault();$("gateErr").textContent="";const p=$("pw").value;
+  if(setup){pw=p;let ok=false;try{ok=await rpc("set_initial_pw",{})}catch(e){}if(!ok){$("gateErr").textContent="Hasło musi mieć min. 6 znaków.";return}setup=false}
+  if(!await start(p))$("gateErr").textContent="Nieprawidłowe hasło.";
+};
+let saved=null;try{saved=localStorage.getItem("pw")}catch(e){}
+if(saved)start(saved).then(ok=>{if(!ok)try{localStorage.removeItem("pw")}catch(e){}});
+</script>
+</body></html>
