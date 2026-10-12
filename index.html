@@ -82,7 +82,8 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
     <input id="fPhone" placeholder="Telefon" type="tel">
     <input id="fMail" placeholder="E-mail" type="email">
     <input id="fProd" placeholder="Co zamówił (produkt, ilość)" class="wide" required>
-    <input id="fNo" placeholder="Nr zamówienia">
+    <input id="fNo" placeholder="Nr zamówienia" required>
+    <p class="err full" id="dupErr"></p>
     <button type="submit">Dodaj zamówienie</button>
   </form>
 
@@ -155,9 +156,10 @@ $("add").onsubmit=async e=>{
   e.preventDefault();
   const v=id=>$(id).value.trim(),btn=e.target.querySelector("button");
   const o={first:v("fFirst"),last:v("fLast"),phone_no:v("fPhone"),email:v("fMail"),product:v("fProd"),no:v("fNo")};
+  if(findDup(o.no)){checkDup();return}
   btn.disabled=true;
-  try{await rpc("add_order",{o});e.target.reset();$("fFirst").focus();filter="open";await load()}
-  catch(err){alert("Nie zapisano – spróbuj ponownie.")}
+  try{await rpc("add_order",{o});e.target.reset();$("dupErr").textContent="";$("fPaste").focus();filter="open";await load()}
+  catch(err){if(/duplicate/.test(err.message)){await load();checkDup()}else alert("Nie zapisano – spróbuj ponownie.")}
   btn.disabled=false;
 };
 
@@ -177,6 +179,16 @@ $("fPaste").addEventListener("input",e=>{
   if(n){e.target.value="";e.target.placeholder="✓ Uzupełniono – dopisz co zamówił i nr zamówienia";$("fProd").focus()}
 });
 
+// ---- duplikaty po numerze zamówienia (baza też to blokuje) ----
+const norm=s=>String(s||"").trim().toLowerCase();
+const findDup=no=>norm(no)&&orders.find(o=>norm(o.no)===norm(no));
+function checkDup(){
+  const d=findDup($("fNo").value);
+  $("dupErr").textContent=d?`Zamówienie nr ${$("fNo").value.trim()} już jest na liście (${d.first||""} ${d.last||""}, dodane ${fmt(d.created)}).`:"";
+  return !!d;
+}
+$("fNo").addEventListener("input",checkDup);
+
 // ---- ekran hasła ----
 async function start(pass){
   pw=pass;
@@ -184,7 +196,8 @@ async function start(pass){
   if(!ok){pw=null;return false}
   try{localStorage.setItem("pw",pass)}catch(e){}
   $("gate").hidden=true;$("app").hidden=false;load();
-  setInterval(()=>{if(!document.hidden&&!document.activeElement.matches("input"))load()},5000);
+  setInterval(()=>{if(!document.hidden&&!document.activeElement.matches("input,textarea"))load()},4000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
   return true;
 }
 // pierwsze uruchomienie: właściciel ustala hasło zespołu
