@@ -67,11 +67,11 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
   <button type="submit">Wejdź</button><p class="err" id="gateErr"></p></form></div>
 <div class="wrap" id="app" hidden>
   <h1>Zamówienia za pobraniem</h1>
-  <p class="sub">Kontrola płatności – kto zapłacił, z kim trzeba się skontaktować.</p>
+  <p class="sub">Kto potwierdził zamówienie, a z kim trzeba się jeszcze skontaktować.</p>
 
   <div class="stats">
-    <div class="stat w"><b id="sOpen">0</b><span>Nieopłacone</span></div>
-    <div class="stat g"><b id="sPaid">0</b><span>Opłacone</span></div>
+    <div class="stat w"><b id="sOpen">0</b><span>Niepotwierdzone</span></div>
+    <div class="stat g"><b id="sPaid">0</b><span>Potwierdzone</span></div>
     <div class="stat"><b id="sAll">0</b><span>Wszystkie</span></div>
   </div>
 
@@ -87,8 +87,8 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
   </form>
 
   <div class="tabs" id="tabs">
-    <button data-f="open" class="on">Nieopłacone</button>
-    <button data-f="paid">Opłacone</button>
+    <button data-f="open" class="on">Niepotwierdzone</button>
+    <button data-f="paid">Potwierdzone</button>
     <button data-f="all">Wszystkie</button>
   </div>
   <div id="list"><p class="empty">Ładowanie…</p></div>
@@ -120,12 +120,12 @@ function render(){
             <dt>Telefon</dt><dd>${o.phone_no?`<a href="tel:${esc(o.phone_no)}">${esc(o.phone_no)}</a>`:esc(o.contact)||"—"}</dd>
             <dt>E-mail</dt><dd>${o.email?`<a href="mailto:${esc(o.email)}">${esc(o.email)}</a>`:"—"}</dd>
           </dl></div>
-        <div><span class="badge">${o.paid?"Opłacone":"Czeka na płatność"}</span>
+        <div><span class="badge">${o.paid?"Potwierdzone":"Czeka na potwierdzenie"}</span>
           <button class="del" data-del="${o.id}">Usuń</button></div>
       </div>
       <div class="checks">
         ${STEPS.map(([k,l])=>`<label class="chk"><input type="checkbox" data-id="${o.id}" data-k="${k}" ${o[k]?"checked":""}>${l}<span class="d">${fmt(o[k])}</span></label>`).join("")}
-        <label class="chk pay"><input type="checkbox" data-id="${o.id}" data-k="paid" ${o.paid?"checked":""}>Opłacone<span class="d">${fmt(o.paid)}</span></label>
+        <label class="chk pay"><input type="checkbox" data-id="${o.id}" data-k="paid" ${o.paid?"checked":""}>Potwierdzone<span class="d">${fmt(o.paid)}</span></label>
       </div>
     </div>`).join("");
 }
