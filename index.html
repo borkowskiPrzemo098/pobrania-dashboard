@@ -25,6 +25,9 @@ h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0}
 form.add{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;
   grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
 form.add .wide{grid-column:span 2}
+form.add .full{grid-column:1/-1}
+textarea{font:inherit;color:var(--ink);background:var(--accent-soft);border:1px dashed var(--accent);border-radius:8px;padding:10px 12px;width:100%;resize:vertical}
+textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .info{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin-top:10px;font-size:14px}
 .info dt{color:var(--muted)} .info dd{margin:0;font-weight:500} .info a{color:var(--ink)}
 input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
@@ -73,13 +76,13 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
   </div>
 
   <form class="add" id="add">
+    <textarea id="fPaste" class="full" rows="3" placeholder="Wklej tutaj „Dane kupującego” ze sklepu – pola uzupełnią się same"></textarea>
     <input id="fFirst" placeholder="Imię" required>
     <input id="fLast" placeholder="Nazwisko" required>
     <input id="fPhone" placeholder="Telefon" type="tel">
     <input id="fMail" placeholder="E-mail" type="email">
     <input id="fProd" placeholder="Co zamówił (produkt, ilość)" class="wide" required>
     <input id="fNo" placeholder="Nr zamówienia">
-    <input id="fAmt" placeholder="Kwota zł" inputmode="decimal">
     <button type="submit">Dodaj zamówienie</button>
   </form>
 
@@ -151,12 +154,28 @@ $("list").onclick=async e=>{
 $("add").onsubmit=async e=>{
   e.preventDefault();
   const v=id=>$(id).value.trim(),btn=e.target.querySelector("button");
-  const o={first:v("fFirst"),last:v("fLast"),phone_no:v("fPhone"),email:v("fMail"),product:v("fProd"),no:v("fNo"),amount:v("fAmt")};
+  const o={first:v("fFirst"),last:v("fLast"),phone_no:v("fPhone"),email:v("fMail"),product:v("fProd"),no:v("fNo")};
   btn.disabled=true;
   try{await rpc("add_order",{o});e.target.reset();$("fFirst").focus();filter="open";await load()}
   catch(err){alert("Nie zapisano – spróbuj ponownie.")}
   btn.disabled=false;
 };
+
+// ---- wklejka „Dane kupującego”: etykieta w jednej linii, wartość w następnej ----
+function parseBuyer(txt){
+  const L=txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean),out={};
+  const after=re=>{const i=L.findIndex(l=>re.test(l));return i>=0&&L[i+1]?L[i+1]:""};
+  const name=after(/^imi[eę] i nazwisko/i);
+  if(name){const p=name.split(/\s+/);out.fFirst=p.shift();out.fLast=p.join(" ")}
+  out.fMail=after(/^e-?mail$/i)||(txt.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[""])[0];
+  out.fPhone=after(/^telefon$/i).replace(/\s+/g,"");
+  return out;
+}
+$("fPaste").addEventListener("input",e=>{
+  const d=parseBuyer(e.target.value);let n=0;
+  for(const[k,v]of Object.entries(d))if(v){$(k).value=v;n++}
+  if(n){e.target.value="";e.target.placeholder="✓ Uzupełniono – dopisz co zamówił i nr zamówienia";$("fProd").focus()}
+});
 
 // ---- ekran hasła ----
 async function start(pass){
