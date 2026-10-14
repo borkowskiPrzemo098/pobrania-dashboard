@@ -93,8 +93,8 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
     <input id="fLast" placeholder="Nazwisko" required>
     <input id="fPhone" placeholder="Telefon" type="tel">
     <input id="fMail" placeholder="E-mail" type="email">
-    <input id="fProd" placeholder="Co zamówił (produkt, ilość)" class="wide" required>
     <input id="fNo" placeholder="Nr zamówienia" required>
+    <input id="fProd" placeholder="Co zamówił (produkt, ilość)" class="wide" required>
     <p class="err full" id="dupErr"></p>
     <button type="submit">Dodaj zamówienie</button>
   </form>
@@ -147,7 +147,7 @@ function render(){
 }
 
 let editing=null;
-const F=[["first","Imię"],["last","Nazwisko"],["phone_no","Telefon"],["email","E-mail"],["product","Co zamówił"],["no","Nr zamówienia"]];
+const F=[["first","Imię"],["last","Nazwisko"],["phone_no","Telefon"],["email","E-mail"],["no","Nr zamówienia"],["product","Co zamówił"]];
 const editCard=o=>`<form class="order editing" data-save="${o.id}">
   <div class="egrid">${F.map(([k,l])=>`<label>${l}<input id="e_${k}" value="${esc(o[k])}"${k==="no"||k==="first"?" required":""}></label>`).join("")}
   <label class="full">Notatka<textarea id="eNote" rows="3" placeholder="np. prosi o kontakt po 16:00">${esc(o.note)}</textarea></label></div>
@@ -213,7 +213,7 @@ function parseBuyer(txt){
 $("fPaste").addEventListener("input",e=>{
   const d=parseBuyer(e.target.value);let n=0;
   for(const[k,v]of Object.entries(d))if(v){$(k).value=v;n++}
-  if(n){e.target.value="";e.target.placeholder="✓ Uzupełniono – dopisz co zamówił i nr zamówienia";$("fProd").focus()}
+  if(n){e.target.value="";e.target.placeholder="✓ Uzupełniono – dopisz nr zamówienia i co zamówił";$("fNo").focus()}
 });
 
 // ---- duplikaty po numerze zamówienia (baza też to blokuje) ----
