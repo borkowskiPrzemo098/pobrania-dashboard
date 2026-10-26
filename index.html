@@ -17,7 +17,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Manrope,system
 .wrap{max-width:920px;margin:0 auto;padding:32px 16px 64px}
 h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0}
 .sub{color:var(--muted);margin:4px 0 24px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .stat b{display:block;font-size:26px;font-weight:800}
 .stat span{color:var(--muted);font-size:13px}
@@ -62,8 +62,13 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
 .egrid textarea{background:var(--bg);border:1px solid var(--line)}
 .eacts{display:flex;gap:8px}
 .ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-@media (max-width:700px){.egrid{grid-template-columns:1fr 1fr}}
+@media (max-width:700px){.stats{grid-template-columns:1fr 1fr}.egrid{grid-template-columns:1fr 1fr}}
 .del:hover{color:var(--danger)}
+.stat.r b{color:var(--danger)}
+.order.resign{background:var(--bg);border-style:dashed;opacity:.85}
+.resign .badge{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+label.chk.res{color:var(--danger);font-weight:700}
+label.chk.res input{accent-color:var(--danger)}
 .empty{text-align:center;color:var(--muted);padding:40px 0}
 .note{color:var(--muted);font-size:13px;margin-top:8px}
 @media (max-width:700px){form.add{grid-template-columns:1fr 1fr}form.add .wide{grid-column:1/-1}form.add button{grid-column:1/-1}.stats{gap:8px}.stat b{font-size:22px}}
@@ -84,6 +89,7 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
   <div class="stats">
     <div class="stat w"><b id="sOpen">0</b><span>Niepotwierdzone</span></div>
     <div class="stat g"><b id="sPaid">0</b><span>Potwierdzone</span></div>
+    <div class="stat r"><b id="sRes">0</b><span>Rezygnacja</span></div>
     <div class="stat"><b id="sAll">0</b><span>Wszystkie</span></div>
   </div>
 
@@ -102,6 +108,7 @@ label.chk.pay{font-weight:700;border-top:1px dashed var(--line);border-radius:0;
   <div class="tabs" id="tabs">
     <button data-f="open" class="on">Niepotwierdzone</button>
     <button data-f="paid">Potwierdzone</button>
+    <button data-f="resign">Rezygnacja</button>
     <button data-f="all">Wszystkie</button>
   </div>
   <div id="list"><p class="empty">Ładowanie…</p></div>
@@ -119,12 +126,14 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 
 function render(){
   const paid=orders.filter(o=>o.paid);
-  $("sOpen").textContent=orders.length-paid.length;$("sPaid").textContent=paid.length;$("sAll").textContent=orders.length;
+  const cat=o=>o.resign?"resign":o.paid?"paid":"open";
+  const cnt=k=>orders.filter(o=>cat(o)===k).length;
+  $("sOpen").textContent=cnt("open");$("sPaid").textContent=cnt("paid");$("sRes").textContent=cnt("resign");$("sAll").textContent=orders.length;
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
-  const rows=orders.filter(o=>filter==="all"||(filter==="paid"?o.paid:!o.paid));
+  const rows=orders.filter(o=>filter==="all"||cat(o)===filter);
   if(!rows.length){$("list").innerHTML='<p class="empty">Brak zamówień w tym widoku.</p>';return}
   $("list").innerHTML=rows.map(o=>o.id===editing?editCard(o):`
-    <div class="order ${o.paid?"paid":""}">
+    <div class="order ${cat(o)}">
       <div class="head">
         <div><div class="name">${esc(o.first||o.name)} ${esc(o.last)}</div>
           <div class="meta">${[o.no&&"Nr "+esc(o.no),o.amount&&esc(o.amount)+" zł","dodano "+fmt(o.created)].filter(Boolean).join(" · ")}</div>
@@ -134,7 +143,7 @@ function render(){
             <dt>E-mail</dt><dd>${o.email?`<a href="mailto:${esc(o.email)}">${esc(o.email)}</a>`:"—"}</dd>
           </dl>
           ${o.note?`<p class="notebox">${esc(o.note)}</p>`:""}</div>
-        <div class="side"><span class="badge">${o.paid?"Potwierdzone":"Czeka na potwierdzenie"}</span>
+        <div class="side"><span class="badge">${o.resign?"Rezygnacja":o.paid?"Potwierdzone":"Czeka na potwierdzenie"}</span>
           <div class="acts"><button class="lnk" data-edit="${o.id}" data-focus="eNote">${o.note?"Zmień notatkę":"+ Notatka"}</button>
           <button class="lnk" data-edit="${o.id}">Edytuj</button>
           <button class="lnk del" data-del="${o.id}">Usuń</button></div></div>
@@ -142,6 +151,7 @@ function render(){
       <div class="checks">
         ${STEPS.map(([k,l])=>`<label class="chk"><input type="checkbox" data-id="${o.id}" data-k="${k}" ${o[k]?"checked":""}>${l}<span class="d">${fmt(o[k])}</span></label>`).join("")}
         <label class="chk pay"><input type="checkbox" data-id="${o.id}" data-k="paid" ${o.paid?"checked":""}>Potwierdzone<span class="d">${fmt(o.paid)}</span></label>
+        <label class="chk res"><input type="checkbox" data-id="${o.id}" data-k="resign" ${o.resign?"checked":""}>Rezygnacja<span class="d">${fmt(o.resign)}</span></label>
       </div>
     </div>`).join("");
 }
