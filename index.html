@@ -40,7 +40,8 @@ button:active{transform:scale(.97)}
 dialog#finder{width:min(560px,calc(100vw - 32px));max-height:80vh;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:16px;margin:10vh auto auto}
 dialog#finder::backdrop{background:rgba(0,0,0,.45)}
 .fhead{display:flex;gap:8px;margin-bottom:12px}
-#fres{display:grid;gap:8px;overflow:auto;max-height:60vh}
+dialog#finder{overflow:hidden}
+#fres{display:grid;gap:8px;overflow-y:auto;overflow-x:hidden;max-height:60vh}
 .hit{display:block;width:100%;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);font-weight:500;padding:12px 14px}
 .hit:hover{border-color:var(--accent)}
 .hit b{font-size:16px}.hit small{display:block;color:var(--muted);font-weight:500;margin-top:2px}
@@ -259,11 +260,11 @@ const plain=x=>String(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"
 const catOf=o=>o.resign?"resign":o.paid?"paid":"open";
 const LBL={open:"Czeka na potwierdzenie",paid:"Potwierdzone",resign:"Rezygnacja"};
 function find(){
-  const q=plain($("fq").value).trim(),qd=q.replace(/D/g,"");
+  const q=plain($("fq").value).trim(),qd=q.replace(/\D/g,"");
   if(q.length<2){$("fres").innerHTML='<p class="empty">Wpisz min. 2 znaki.</p>';return}
   const hits=orders.filter(o=>{
     const t=plain([o.first,o.last,o.email,o.no,o.first+" "+o.last,o.last+" "+o.first].join(" | "));
-    return t.includes(q)||(qd.length>=3&&String(o.phone_no||"").replace(/D/g,"").includes(qd));
+    return t.includes(q)||(qd.length>=3&&String(o.phone_no||"").replace(/\D/g,"").includes(qd));
   });
   $("fres").innerHTML=hits.length?hits.map(o=>`<button type="button" class="hit ${catOf(o)}" data-go="${o.id}">
     <span class="badge">${LBL[catOf(o)]}</span><b>${esc(o.first)} ${esc(o.last)}</b>
